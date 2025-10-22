@@ -7,7 +7,7 @@ import winreg
 
 class FloatingTodoApp:
     def __init__(self):
-        # 创建主窗口 - 不使用 overrideredirect
+        # 创建主窗口
         self.root = tk.Tk()
         self.root.title("悬浮待办事项")
         
@@ -26,14 +26,9 @@ class FloatingTodoApp:
         self.completed_color = "#888888"
         self.entry_bg = "#2A2A2A"
         self.hover_color = "#3A3A3A"
-        self.title_bg = "#1A1A1A"
         
         # 配置窗口背景
         self.root.configure(bg=self.bg_color)
-        
-        # 移除窗口装饰但保留任务栏图标
-        self.root.overrideredirect(False)  # 改为False
-        self.root.resizable(True, True)
         
         # 设置自定义图标
         self.set_custom_icon()
@@ -53,7 +48,6 @@ class FloatingTodoApp:
     def set_custom_icon(self):
         """设置自定义图标"""
         try:
-            # 直接使用iconbitmap
             if os.path.exists("todo_icon.ico"):
                 self.root.iconbitmap("todo_icon.ico")
                 print("图标设置成功")
@@ -66,58 +60,13 @@ class FloatingTodoApp:
             print(f"设置图标失败: {e}")
     
     def create_widgets(self):
-        # 自定义标题栏 - 覆盖系统标题栏
-        self.title_frame = tk.Frame(self.root, bg=self.title_bg, height=35)
-        self.title_frame.pack(fill=tk.X, side=tk.TOP)
-        self.title_frame.pack_propagate(False)
-        
-        # 标题（左侧）
-        self.title_label = tk.Label(self.title_frame, 
-                                text="📝 待办事项",
-                                bg=self.title_bg,
-                                fg=self.text_color,
-                                font=('Segoe UI', 11, 'bold'))
-        self.title_label.pack(side=tk.LEFT, padx=12, pady=8)
-        
-        # 窗口控制按钮（右侧）
-        self.control_frame = tk.Frame(self.title_frame, bg=self.title_bg)
-        self.control_frame.pack(side=tk.RIGHT, padx=5)
-        
-        # 最小化按钮
-        self.minimize_btn = tk.Button(self.control_frame, 
-                                    text="－", 
-                                    command=self.minimize_window,
-                                    bg=self.title_bg,
-                                    fg=self.text_color,
-                                    border=0,
-                                    font=('Arial', 14, 'bold'),
-                                    activebackground="#555555",
-                                    activeforeground=self.text_color,
-                                    cursor='hand2',
-                                    width=3)
-        self.minimize_btn.pack(side=tk.LEFT, padx=2)
-        
-        # 关闭按钮
-        self.close_btn = tk.Button(self.control_frame, 
-                                text="×", 
-                                command=self.root.quit,
-                                bg=self.title_bg,
-                                fg=self.text_color,
-                                border=0,
-                                font=('Arial', 14, 'bold'),
-                                activebackground="#E57373",
-                                activeforeground=self.text_color,
-                                cursor='hand2',
-                                width=3)
-        self.close_btn.pack(side=tk.LEFT, padx=2)
-        
         # 主容器
         self.main_frame = tk.Frame(self.root, bg=self.bg_color)
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
+        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
         
         # 输入区域
         self.input_frame = tk.Frame(self.main_frame, bg=self.bg_color)
-        self.input_frame.pack(fill=tk.X, padx=20, pady=15)
+        self.input_frame.pack(fill=tk.X, padx=20, pady=20)
         
         # 输入框
         self.entry = tk.Entry(self.input_frame, 
@@ -164,63 +113,6 @@ class FloatingTodoApp:
         # 窗口调整大小的控制点
         self.create_resize_control()
     
-    def minimize_window(self):
-        """最小化窗口到任务栏"""
-        self.root.iconify()
-    
-    def bind_events(self):
-        # 绑定拖动事件 - 标题栏拖动
-        self.title_frame.bind("<ButtonPress-1>", self.start_move)
-        self.title_frame.bind("<ButtonRelease-1>", self.stop_move)
-        self.title_frame.bind("<B1-Motion>", self.do_move)
-        self.title_label.bind("<ButtonPress-1>", self.start_move)
-        self.title_label.bind("<ButtonRelease-1>", self.stop_move)
-        self.title_label.bind("<B1-Motion>", self.do_move)
-        
-        # 绑定回车键添加待办事项
-        self.entry.bind("<Return>", lambda event: self.add_todo())
-        
-        # 绑定列表框点击事件
-        self.todo_list.bind("<Button-1>", self.on_list_click)
-    
-    def start_move(self, event):
-        self.x = event.x
-        self.y = event.y
-        
-    def stop_move(self, event):
-        self.x = None
-        self.y = None
-        
-    def do_move(self, event):
-        deltax = event.x - self.x
-        deltay = event.y - self.y
-        x = self.root.winfo_x() + deltax
-        y = self.root.winfo_y() + deltay
-        self.root.geometry(f"+{x}+{y}")
-    
-    def on_scroll_change(self, first, last):
-        """当滚动位置改变时调用，用于控制滚动条的显示/隐藏"""
-        self.scrollbar.set(first, last)
-        
-        if float(first) <= 0.0 and float(last) >= 1.0:
-            self.scrollbar.pack_forget()
-        else:
-            self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-    def set_custom_icon(self):
-        """设置自定义图标"""
-        try:
-            # 设置应用程序图标
-            self.root.iconbitmap("todo_icon.ico")
-        except:
-            try:
-                # 如果当前目录没有，尝试其他位置
-                self.root.iconbitmap("icons/todo_icon.ico")
-            except:
-                print("未找到图标文件，使用系统默认图标")
-
-
-        
     def create_resize_control(self):
         # 右下角调整大小的控制点
         self.resize_control = tk.Frame(self.root, bg=self.accent_color, width=12, height=12)
@@ -252,6 +144,22 @@ class FloatingTodoApp:
         if not self.entry.get().strip():
             self.entry.insert(0, "输入待办事项，按回车添加")
             self.entry.configure(fg="#666666") 
+    
+    def bind_events(self):
+        # 绑定回车键添加待办事项
+        self.entry.bind("<Return>", lambda event: self.add_todo())
+        
+        # 绑定列表框点击事件
+        self.todo_list.bind("<Button-1>", self.on_list_click)
+    
+    def on_scroll_change(self, first, last):
+        """当滚动位置改变时调用，用于控制滚动条的显示/隐藏"""
+        self.scrollbar.set(first, last)
+        
+        if float(first) <= 0.0 and float(last) >= 1.0:
+            self.scrollbar.pack_forget()
+        else:
+            self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     
     def on_list_click(self, event):
         # 获取点击的项索引
