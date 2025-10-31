@@ -1,4 +1,6 @@
+下载后直接点击dist文件夹里的.exe文件即可直接使用
 
+如若.exe文件无法正常打开：
 运行方法1：
 1，打开文件夹
 2，右键，用终端打开
@@ -11,3 +13,4 @@
 3，输入：pip install pyinstaller
 4，输入：pyinstaller --onefile --noconsole tool_app.py
 >>在生成的 dist 文件夹中找到 tool_app.exe，可以直接双击运行，无需Python环境
+
