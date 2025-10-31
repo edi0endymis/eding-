@@ -36,6 +36,11 @@ class FloatingTodoApp:
         # 存储待办事项
         self.todos = []
         
+        # 字体大小设置
+        self.font_size = 11  # 默认字体大小
+        self.min_font_size = 8  # 最小字体大小
+        self.max_font_size = 20  # 最大字体大小
+        
         # 创建UI
         self.create_widgets()
         
@@ -97,7 +102,7 @@ class FloatingTodoApp:
                                 fg=self.text_color,
                                 bd=0,
                                 highlightthickness=0,
-                                font=('Segoe UI', 11),
+                                font=('Segoe UI', self.font_size),
                                 activestyle='none')
         self.todo_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
@@ -110,8 +115,16 @@ class FloatingTodoApp:
                                     activebackground="#7e8dff",
                                     width=12)
         
+        # 创建右键菜单
+        self.create_context_menu()
+        
         # 窗口调整大小的控制点
         self.create_resize_control()
+    
+    def create_context_menu(self):
+        """创建右键上下文菜单"""
+        self.context_menu = tk.Menu(self.root, tearoff=0, bg=self.entry_bg, fg=self.text_color)
+        self.context_menu.add_command(label="删除", command=self.delete_selected_todo)
     
     def create_resize_control(self):
         # 右下角调整大小的控制点
@@ -151,6 +164,14 @@ class FloatingTodoApp:
         
         # 绑定列表框点击事件
         self.todo_list.bind("<Button-1>", self.on_list_click)
+        
+        # 绑定列表框右键点击事件
+        self.todo_list.bind("<Button-3>", self.show_context_menu)
+        
+        # 绑定字体缩放快捷键
+        self.root.bind("<Control-plus>", self.increase_font_size)
+        self.root.bind("<Control-equal>", self.increase_font_size)  # 某些键盘布局需要
+        self.root.bind("<Control-minus>", self.decrease_font_size)
     
     def on_scroll_change(self, first, last):
         """当滚动位置改变时调用，用于控制滚动条的显示/隐藏"""
@@ -166,6 +187,46 @@ class FloatingTodoApp:
         index = self.todo_list.nearest(event.y)
         if index >= 0:
             self.toggle_todo(index)
+    
+    def show_context_menu(self, event):
+        """显示右键菜单"""
+        # 获取点击的项索引
+        index = self.todo_list.nearest(event.y)
+        if index >= 0 and index < len(self.todos):
+            # 选中该项
+            self.todo_list.selection_clear(0, tk.END)
+            self.todo_list.selection_set(index)
+            
+            # 显示右键菜单
+            try:
+                self.context_menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                self.context_menu.grab_release()
+    
+    def delete_selected_todo(self):
+        """删除选中的待办事项"""
+        selected_indices = self.todo_list.curselection()
+        if selected_indices:
+            index = selected_indices[0]
+            if 0 <= index < len(self.todos):
+                # 从列表中删除
+                del self.todos[index]
+                # 更新显示
+                self.update_todo_list()
+                # 保存更改
+                self.save_todos()
+            
+    def increase_font_size(self, event=None):
+        """增大字体大小"""
+        if self.font_size < self.max_font_size:
+            self.font_size += 1
+            self.todo_list.configure(font=('Segoe UI', self.font_size))
+    
+    def decrease_font_size(self, event=None):
+        """减小字体大小"""
+        if self.font_size > self.min_font_size:
+            self.font_size -= 1
+            self.todo_list.configure(font=('Segoe UI', self.font_size))
         
     def add_todo(self):
         todo_text = self.entry.get().strip()
